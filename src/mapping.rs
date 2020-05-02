@@ -44,7 +44,7 @@ impl Mapper {
     pub fn unpack(&self, points: &Vec<Point>) -> Vec<u8> {
         let mut res: Vec<u8> = Vec::new();
         for p in points.iter() {
-            let block = p.x.to_bytes()[1..].to_vec();
+            let block = p.x.to_bytes()[1..(self.block_size + 1)].to_vec();
             res.extend(&block);
         }
         if let Some(idx) = res.iter().rposition(|e| *e != 0) {
