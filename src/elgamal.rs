@@ -22,10 +22,9 @@ pub struct PublicKey<'a, T: CurveTrait> {
 
 
 impl<'a, T: CurveTrait> PrivateKey<'a, T> {
-    pub fn new<R: Rng + ?Sized>(bits: usize, schema: &'a Schema<T>,
-                                rng: &mut R) -> Self {
-        let x = Bigi::gen_random(rng, bits, false) % &schema.order;
-        let h = schema.curve.mul(&schema.generator, &x);
+    pub fn new<R: Rng + ?Sized>(bits: usize, rng: &mut R,
+                                schema: &'a Schema<T>) -> Self {
+        let (x, h) = schema.generate_pair(bits, rng);
         PrivateKey {
             bits: bits,
             schema: schema,
@@ -64,9 +63,8 @@ impl<'a, T: CurveTrait> PublicKey<'a, T> {
 
     pub fn encrypt<R: Rng + ?Sized>(&self, points: &Vec<Point>,
                                     rng: &mut R) -> (Point, Vec<Point>) {
-        let y = Bigi::gen_random(rng, self.bits, false) % &self.schema.order;
+        let (y, c1) = self.schema.generate_pair(self.bits, rng);
         let s = self.schema.curve.mul(&self.h, &y);
-        let c1 = self.schema.curve.mul(&self.schema.generator, &y);
         let c2 = points.iter().map(|m| {
             self.schema.curve.add(&s, &m)
         }).collect();
@@ -85,7 +83,7 @@ mod tests {
         let mut rng = rand::thread_rng();
         let schema = schemas::load_secp256k1();
 
-        let private_key = PrivateKey::new(256, &schema, &mut rng);
+        let private_key = PrivateKey::new(256, &mut rng, &schema);
         let public_key = private_key.get_public_key();
 
         let mx = Bigi::from_hex("0x3541E1F95455C55319AC557D1ECC817C227CBE68405E78838577B99FE7E02D2B");

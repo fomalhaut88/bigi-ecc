@@ -1,3 +1,6 @@
+extern crate rand;
+
+use rand::Rng;
 use bigi::{Bigi, bigi, BIGI_MAX_DIGITS};
 use crate::{point};
 use crate::base::{Point, CurveTrait};
@@ -10,6 +13,15 @@ pub struct Schema<T: CurveTrait> {
     pub order: Bigi,
     pub cofactor: Bigi,
     pub generator: Point
+}
+
+
+impl<T: CurveTrait> Schema<T> {
+    pub fn generate_pair<R: Rng + ?Sized>(&self, bits: usize, rng: &mut R) -> (Bigi, Point) {
+        let x = Bigi::gen_random(rng, bits, false) % &self.order;
+        let h = self.curve.mul(&self.generator, &x);
+        (x, h)
+    }
 }
 
 
