@@ -47,6 +47,10 @@ impl Mapper {
             let block = p.x.to_bytes()[1..].to_vec();
             res.extend(&block);
         }
+        if let Some(idx) = res.iter().rposition(|e| *e != 0) {
+            let end = idx + 1;
+            res.truncate(end);
+        }
         res
     }
 }
