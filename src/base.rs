@@ -60,6 +60,18 @@ impl fmt::Debug for Point {
 }
 
 
+impl Point {
+    pub fn to_hex(&self) -> String {
+        format!("{} {}", self.x.to_hex(), self.y.to_hex())
+    }
+
+    pub fn from_hex(hex: &str) -> Point {
+        let v: Vec<&str> = hex.split_whitespace().collect();
+        point!(Bigi::from_hex(v[0]), Bigi::from_hex(v[1]))
+    }
+}
+
+
 pub trait CurveTrait {
     fn get_modulo(&self) -> Bigi;
     fn zero(&self) -> Point;
@@ -82,5 +94,22 @@ pub trait CurveTrait {
             p2 = self.double(&p2);
         }
         res
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bigi::{bigi, BIGI_MAX_DIGITS};
+
+    #[test]
+    fn test_to_hex() {
+        assert_eq!(point_simple!(1234, 1255).to_hex(), "0x4D2 0x4E7");
+    }
+
+    #[test]
+    fn test_from_hex() {
+        assert_eq!(Point::from_hex("0x4D2 0x4E7"), point_simple!(1234, 1255));
     }
 }
