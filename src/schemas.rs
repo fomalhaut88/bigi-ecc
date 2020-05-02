@@ -17,9 +17,13 @@ pub struct Schema<T: CurveTrait> {
 
 
 impl<T: CurveTrait> Schema<T> {
+    pub fn get_point(&self, k: &Bigi) -> Point {
+        self.curve.mul(&self.generator, k)
+    }
+
     pub fn generate_pair<R: Rng + ?Sized>(&self, bits: usize, rng: &mut R) -> (Bigi, Point) {
         let x = Bigi::gen_random(rng, bits, false) % &self.order;
-        let h = self.curve.mul(&self.generator, &x);
+        let h = self.get_point(&x);
         (x, h)
     }
 }

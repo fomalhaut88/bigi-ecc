@@ -54,7 +54,7 @@ pub fn check_signature<T: CurveTrait>(
     let u1 = mul_mod(&si, &h, &schema.order);
     let u2 = mul_mod(&si, &r, &schema.order);
     let p = schema.curve.add(
-        &schema.curve.mul(&schema.generator, &u1),
+        &schema.get_point(&u1),
         &schema.curve.mul(&public_key, &u2)
     );
     p.x == *r
