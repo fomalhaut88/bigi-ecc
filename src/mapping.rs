@@ -12,7 +12,7 @@ pub struct Mapper {
 impl Mapper {
     pub fn new(bits: usize) -> Self {
         Self {
-            block_size: bits / 8 - 1
+            block_size: bits / 8 - 2
         }
     }
 
