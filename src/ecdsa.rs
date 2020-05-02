@@ -61,7 +61,6 @@ pub fn check_signature<T: CurveTrait>(
 }
 
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
