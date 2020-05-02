@@ -81,7 +81,9 @@ mod tests {
         let schema = schemas::load_secp256k1();
         let (private_key, public_key) = schema.generate_pair(256, &mut rng);
 
-        let signature = build_signature(256, &mut rng, &schema, &private_key, &hash.to_vec());
+        let signature = build_signature(
+            256, &mut rng, &schema, &private_key, &hash.to_vec()
+        );
 
         assert_eq!(
             check_signature(&schema, &public_key, &hash.to_vec(), &signature),
@@ -89,7 +91,8 @@ mod tests {
         );
 
         assert_eq!(
-            check_signature(&schema, &public_key, &hash.to_vec(), &(bigi![1231], bigi![3246457])),
+            check_signature(&schema, &public_key, &hash.to_vec(),
+                            &(bigi![1231], bigi![3246457])),
             false
         );
     }

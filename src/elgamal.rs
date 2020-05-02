@@ -6,62 +6,33 @@ use crate::base::{Point, CurveTrait};
 use crate::schemas::Schema;
 
 
-pub struct PrivateKey<'a, T: CurveTrait> {
-    pub bits: usize,
-    pub schema: &'a Schema<T>,
-    pub h: Point,
-    pub x: Bigi
+pub fn encrypt<R: Rng + ?Sized, T: CurveTrait>(
+            bits: usize,
+            rng: &mut R,
+            schema: &Schema<T>,
+            public_key: &Point,
+            points: &Vec<Point>
+        ) -> (Point, Vec<Point>) {
+    let (y, c1) = schema.generate_pair(bits, rng);
+    let s = schema.curve.mul(&public_key, &y);
+    let c2 = points.iter().map(|m| {
+        schema.curve.add(&s, &m)
+    }).collect();
+    (c1, c2)
 }
 
 
-pub struct PublicKey<'a, T: CurveTrait> {
-    pub bits: usize,
-    pub schema: &'a Schema<T>,
-    pub h: Point
-}
-
-
-impl<'a, T: CurveTrait> PrivateKey<'a, T> {
-    pub fn random<R: Rng + ?Sized>(bits: usize, rng: &mut R,
-                                schema: &'a Schema<T>) -> Self {
-        let (x, h) = schema.generate_pair(bits, rng);
-        PrivateKey {
-            bits: bits,
-            schema: schema,
-            h: h,
-            x: x
-        }
-    }
-
-    pub fn get_public_key(&self) -> PublicKey<'a, T> {
-        PublicKey {
-            bits: self.bits,
-            schema: self.schema,
-            h: self.h
-        }
-    }
-
-    pub fn decrypt(&self, encrypted: &(Point, Vec<Point>)) -> Vec<Point> {
-        let (c1, c2) = encrypted;
-        let s = self.schema.curve.mul(&c1, &self.x);
-        let si = self.schema.curve.inv(&s);
-        c2.iter().map(|m| {
-            self.schema.curve.add(&si, &m)
-        }).collect()
-    }
-}
-
-
-impl<'a, T: CurveTrait> PublicKey<'a, T> {
-    pub fn encrypt<R: Rng + ?Sized>(&self, points: &Vec<Point>,
-                                    rng: &mut R) -> (Point, Vec<Point>) {
-        let (y, c1) = self.schema.generate_pair(self.bits, rng);
-        let s = self.schema.curve.mul(&self.h, &y);
-        let c2 = points.iter().map(|m| {
-            self.schema.curve.add(&s, &m)
-        }).collect();
-        (c1, c2)
-    }
+pub fn decrypt<T: CurveTrait>(
+            schema: &Schema<T>,
+            private_key: &Bigi,
+            encrypted: &(Point, Vec<Point>)
+        ) -> Vec<Point> {
+    let (c1, c2) = encrypted;
+    let s = schema.curve.mul(&c1, &private_key);
+    let si = schema.curve.inv(&s);
+    c2.iter().map(|m| {
+        schema.curve.add(&si, &m)
+    }).collect()
 }
 
 
@@ -75,8 +46,7 @@ mod tests {
         let mut rng = rand::thread_rng();
         let schema = schemas::load_secp256k1();
 
-        let private_key = PrivateKey::random(256, &mut rng, &schema);
-        let public_key = private_key.get_public_key();
+        let (private_key, public_key) = schema.generate_pair(256, &mut rng);
 
         let mx = Bigi::from_hex("0x3541E1F95455C55319AC557D1ECC817C227CBE68405E78838577B99FE7E02D2B");
         let my = schema.curve.find_y(&mx).unwrap().0;
@@ -84,8 +54,8 @@ mod tests {
             point![mx, my]
         ];
 
-        let encrypted = public_key.encrypt(&original, &mut rng);
-        let decripted = private_key.decrypt(&encrypted);
+        let encrypted = encrypt(256, &mut rng, &schema, &public_key, &original);
+        let decripted = decrypt(&schema, &private_key, &encrypted);
 
         assert_eq!(original[0], decripted[0]);
     }
