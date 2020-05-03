@@ -1,5 +1,5 @@
 use std::fmt;
-use bigi::{Bigi, BIGI_TYPE_BITS};
+use bigi::{Bigi, BIGI_TYPE_BITS, BIGI_BYTES};
 
 
 #[derive(Copy, Clone)]
@@ -69,6 +69,20 @@ impl Point {
         let v: Vec<&str> = hex.split_whitespace().collect();
         point!(Bigi::from_hex(v[0]), Bigi::from_hex(v[1]))
     }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut res = Vec::new();
+        res.extend(&self.x.to_bytes());
+        res.extend(&self.y.to_bytes());
+        res
+    }
+
+    pub fn from_bytes(bytes: &[u8]) -> Point {
+        point!(
+            Bigi::from_bytes(&bytes[0..BIGI_BYTES]),
+            Bigi::from_bytes(&bytes[BIGI_BYTES..(2 * BIGI_BYTES)])
+        )
+    }
 }
 
 
@@ -111,5 +125,36 @@ mod tests {
     #[test]
     fn test_from_hex() {
         assert_eq!(Point::from_hex("0x4D2 0x4E7"), point_simple!(1234, 1255));
+    }
+
+    #[test]
+    fn test_to_bytes() {
+        assert_eq!(
+            point_simple!(2, 3).to_bytes(),
+            vec![2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        );
+    }
+
+    #[test]
+    fn test_from_bytes() {
+        assert_eq!(
+            Point::from_bytes(
+                &vec![2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                      3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+            ), point_simple!(2, 3)
+        );
     }
 }

@@ -14,7 +14,7 @@ pub fn build_signature<T: CurveTrait, R: Rng + ?Sized>(
             private_key: &Bigi,
             hash: &Vec<u8>
         ) -> (Bigi, Bigi) {
-    let h = Bigi::from_bytes(&hash).unwrap() % &schema.order;
+    let h = Bigi::from_bytes(hash) % &schema.order;
 
     let (k, r) = {
         let mut k;
@@ -48,7 +48,7 @@ pub fn check_signature<T: CurveTrait>(
             hash: &Vec<u8>,
             signature: &(Bigi, Bigi)
         ) -> bool {
-    let h = Bigi::from_bytes(&hash).unwrap() % &schema.order;
+    let h = Bigi::from_bytes(hash) % &schema.order;
     let (r, s) = signature;
     let si = inv_mod(&s, &schema.order);
     let u1 = mul_mod(&si, &h, &schema.order);

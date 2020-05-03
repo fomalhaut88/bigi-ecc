@@ -26,7 +26,7 @@ impl Mapper {
             let block = &body[i..end];
             let (x, y) = {
                 let res;
-                let mut x = Bigi::from_bytes(&block).unwrap() << 8;
+                let mut x = Bigi::from_bytes(&block) << 8;
                 loop {
                     match curve.find_y(&x) {
                         Ok(roots) => { res = (x, roots.0); break; },
