@@ -3,7 +3,7 @@
 [[package]]
 name = "bigi"
 version = "0.1.0"
-source = "git+https://github.com/fomalhaut88/bigi.git#dc4b915fdbbd07a462ad38cecd304220d4f399a7"
+source = "git+https://github.com/fomalhaut88/bigi.git?tag=v0.1.0#dc4b915fdbbd07a462ad38cecd304220d4f399a7"
 dependencies = [
  "rand",
 ]
