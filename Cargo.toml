@@ -1,6 +1,6 @@
 [package]
 name = "bigi-ecc"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Alexander <mail@fomalhaut.su>"]
 edition = "2018"
 

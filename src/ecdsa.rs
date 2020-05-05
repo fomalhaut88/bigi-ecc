@@ -8,7 +8,6 @@ use crate::schemas::{Schema};
 
 
 pub fn build_signature<T: CurveTrait, R: Rng + ?Sized>(
-            bits: usize,
             rng: &mut R,
             schema: &Schema<T>,
             private_key: &Bigi,
@@ -20,7 +19,7 @@ pub fn build_signature<T: CurveTrait, R: Rng + ?Sized>(
         let mut k;
         let mut r;
         loop {
-            let pair = schema.generate_pair(bits, rng);
+            let pair = schema.generate_pair(rng);
             k = pair.0;
             r = pair.1.x % &schema.order;
             if r != bigi![0] {
@@ -79,10 +78,10 @@ mod tests {
 
         let mut rng = rand::thread_rng();
         let schema = schemas::load_secp256k1();
-        let (private_key, public_key) = schema.generate_pair(256, &mut rng);
+        let (private_key, public_key) = schema.generate_pair(&mut rng);
 
         let signature = build_signature(
-            256, &mut rng, &schema, &private_key, &hash.to_vec()
+            &mut rng, &schema, &private_key, &hash.to_vec()
         );
 
         assert_eq!(
