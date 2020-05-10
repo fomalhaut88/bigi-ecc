@@ -63,7 +63,7 @@ pub fn check_signature<T: CurveTrait>(
 #[cfg(test)]
 mod tests {
     use super::*;
-
+    use test::Bencher;
     use sha2::{Sha256, Digest};
     use crate::schemas;
 
@@ -93,6 +93,46 @@ mod tests {
             check_signature(&schema, &public_key, &hash.to_vec(),
                             &(bigi![1231], bigi![3246457])),
             false
+        );
+    }
+
+    #[bench]
+    fn bench_build_signature(b: &mut Bencher) {
+        let message = b"This project is sort of half polyfill for features like the host bindings proposal and half features for empowering high-level interactions between JS and wasm-compiled code (currently mostly from Rust). More specifically this project allows JS/wasm to communicate with strings, JS objects, classes, etc, as opposed to purely integers and floats. Using wasm-bindgen for example you can define a JS class in Rust or take a string from JS or return one. The functionality is growing as well!";
+
+        let mut hasher = Sha256::new();
+        hasher.reset();
+        hasher.input(&message[..]);
+        let hash = hasher.result();
+
+        let mut rng = rand::thread_rng();
+        let schema = schemas::load_secp256k1();
+        let (private_key, _public_key) = schema.generate_pair(&mut rng);
+
+        b.iter(|| build_signature(
+            &mut rng, &schema, &private_key, &hash.to_vec()
+        ));
+    }
+
+    #[bench]
+    fn bench_check_signature(b: &mut Bencher) {
+        let message = b"This project is sort of half polyfill for features like the host bindings proposal and half features for empowering high-level interactions between JS and wasm-compiled code (currently mostly from Rust). More specifically this project allows JS/wasm to communicate with strings, JS objects, classes, etc, as opposed to purely integers and floats. Using wasm-bindgen for example you can define a JS class in Rust or take a string from JS or return one. The functionality is growing as well!";
+
+        let mut hasher = Sha256::new();
+        hasher.reset();
+        hasher.input(&message[..]);
+        let hash = hasher.result();
+
+        let mut rng = rand::thread_rng();
+        let schema = schemas::load_secp256k1();
+        let (private_key, public_key) = schema.generate_pair(&mut rng);
+
+        let signature = build_signature(
+            &mut rng, &schema, &private_key, &hash.to_vec()
+        );
+
+        b.iter(|| check_signature(
+            &schema, &public_key, &hash.to_vec(), &signature)
         );
     }
 }

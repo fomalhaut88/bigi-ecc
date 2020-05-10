@@ -1,6 +1,6 @@
 [package]
 name = "bigi-ecc"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Alexander <mail@fomalhaut.su>"]
 edition = "2018"
 
@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies]
 rand = "0.7.3"
 sha2 = "0.8.1"
-bigi = { git = "https://github.com/fomalhaut88/bigi.git", tag = "v0.2.1" }
+bigi = { git = "https://github.com/fomalhaut88/bigi.git", tag = "v0.3.3" }

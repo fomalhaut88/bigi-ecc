@@ -1,5 +1,5 @@
 use std::fmt;
-use bigi::{Bigi, BIGI_TYPE_BITS, BIGI_BYTES};
+use bigi::{Bigi, BIGI_BYTES};
 
 
 #[derive(Copy, Clone)]
@@ -101,7 +101,7 @@ pub trait CurveTrait {
     fn mul(&self, p: &Point, k: &Bigi) -> Point {
         let mut res = self.zero();
         let mut p2 = p.clone();
-        for i in 0..(BIGI_TYPE_BITS * k.order) {
+        for i in 0..k.bit_length() {
             if k.get_bit(i) {
                 res = self.add(&res, &p2);
             }
@@ -116,6 +116,7 @@ pub trait CurveTrait {
 mod tests {
     use super::*;
     use bigi::{bigi, BIGI_MAX_DIGITS};
+    use test::Bencher;
 
     #[test]
     fn test_to_hex() {
@@ -156,5 +157,42 @@ mod tests {
                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
             ), point_simple!(2, 3)
         );
+    }
+
+    #[bench]
+    fn bench_to_hex_256(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let x = Bigi::gen_random(&mut rng, 256, false);
+        let y = Bigi::gen_random(&mut rng, 256, false);
+        let p = point!(x, y);
+        b.iter(|| p.to_hex());
+    }
+
+    #[bench]
+    fn bench_to_bytes_256(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let x = Bigi::gen_random(&mut rng, 256, false);
+        let y = Bigi::gen_random(&mut rng, 256, false);
+        let p = point!(x, y);
+        b.iter(|| p.to_bytes());
+    }
+
+    #[bench]
+    fn bench_from_hex_256(b: &mut Bencher) {
+        b.iter(|| Point::from_hex("0xCA0D6AB29A21576F099A19B90DE2AFAF0A350DA6CA630725130E3F6A2BE77EB2 0xAE8B83698251862BE2C4D808149099D9D6525EF141B10C90BFF745094D1C9861"));
+    }
+
+    #[bench]
+    fn bench_from_bytes_256(b: &mut Bencher) {
+        b.iter(|| Point::from_bytes(
+            &vec![158, 17, 67, 29, 164, 141, 187, 19, 131, 247, 203, 136, 74,
+                  245, 44, 55, 52, 199, 147, 42, 68, 57, 169, 223, 210, 162,
+                  60, 196, 45, 7, 59, 77, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  164, 76, 176, 189, 26, 65, 21, 46, 51, 209, 243, 12, 68, 246,
+                  75, 198, 43, 40, 139, 106, 66, 13, 3, 66, 37, 197, 108, 27,
+                  52, 222, 83, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ));
     }
 }

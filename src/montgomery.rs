@@ -8,6 +8,7 @@ use crate::{point, point_zero};
 use crate::base::{Point, CurveTrait};
 
 
+#[derive(Copy, Clone)]
 pub struct MontgomeryCurve {
     pub a: Bigi,
     pub b: Bigi,
@@ -137,6 +138,8 @@ impl CurveTrait for MontgomeryCurve {
 mod tests {
     use super::*;
     use crate::point_simple;
+    use crate::schemas::load_curve25519;
+    use test::Bencher;
 
     #[test]
     fn test_check() {
@@ -192,5 +195,77 @@ mod tests {
         assert_eq!(curve.mul(&point_simple!(12, 39), &bigi![2]), point_simple!(65, 15));
         assert_eq!(curve.mul(&point_simple!(12, 39), &bigi![3]), point_simple!(18, 90));
         assert_eq!(curve.mul(&point_simple!(12, 39), &bigi![11]), point_zero!());
+    }
+
+    #[test]
+    fn test_curve25519() {
+        let schema = load_curve25519();
+        assert_eq!(schema.curve.check(&schema.generator), true);
+        assert_eq!(schema.curve.check(&schema.get_point(&bigi![25])), true);
+        assert_eq!(schema.get_point(&schema.order), schema.curve.zero());
+    }
+
+    #[bench]
+    fn bench_curve25519_generate_pair(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_curve25519();
+        b.iter(|| schema.generate_pair(&mut rng));
+    }
+
+    #[bench]
+    fn bench_curve25519_add(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_curve25519();
+        let k1 = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let k2 = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p1 = schema.get_point(&k1);
+        let p2 = schema.get_point(&k2);
+        b.iter(|| schema.curve.add(&p1, &p2));
+    }
+
+    #[bench]
+    fn bench_curve25519_double(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_curve25519();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.double(&p));
+    }
+
+    #[bench]
+    fn bench_curve25519_mul(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_curve25519();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let l = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.mul(&p, &l));
+    }
+
+    #[bench]
+    fn bench_curve25519_check(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_curve25519();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.check(&p));
+    }
+
+    #[bench]
+    fn bench_curve25519_inv(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_curve25519();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.inv(&p));
+    }
+
+    #[bench]
+    fn bench_curve25519_find_y(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_curve25519();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.find_y(&p.x));
     }
 }

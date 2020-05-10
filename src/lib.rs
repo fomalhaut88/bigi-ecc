@@ -1,3 +1,6 @@
+#![feature(test)]
+extern crate test;
+
 pub mod base;
 pub mod weierstrass;
 pub mod montgomery;

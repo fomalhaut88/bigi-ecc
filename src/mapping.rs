@@ -4,19 +4,21 @@ use crate::{point};
 use crate::base::{Point, CurveTrait};
 
 
-pub struct Mapper {
-    block_size: usize
+pub struct Mapper<T: CurveTrait> {
+    block_size: usize,
+    curve: T
 }
 
 
-impl Mapper {
-    pub fn new(bits: usize) -> Self {
+impl<T: CurveTrait + Copy> Mapper<T> {
+    pub fn new(bits: usize, curve: &T) -> Self {
         Self {
-            block_size: bits / 8 - 2
+            block_size: bits / 8 - 2,
+            curve: *curve
         }
     }
 
-    pub fn pack<T: CurveTrait>(&self, body: &Vec<u8>, curve: &T) -> Vec<Point> {
+    pub fn pack(&self, body: &Vec<u8>) -> Vec<Point> {
         let size = body.len();
         let mut points: Vec<Point> = Vec::new();
 
@@ -28,7 +30,7 @@ impl Mapper {
                 let res;
                 let mut x = Bigi::from_bytes(&block) << 8;
                 loop {
-                    match curve.find_y(&x) {
+                    match self.curve.find_y(&x) {
                         Ok(roots) => { res = (x, roots.0); break; },
                         Err(_e) => { x += &bigi![1] }
                     }
@@ -52,5 +54,45 @@ impl Mapper {
             res.truncate(end);
         }
         res
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test::Bencher;
+    use crate::schemas::load_secp256k1;
+
+    #[test]
+    fn test_mapper() {
+        let body = "use bigi::{Bigi, bigi, BIGI_MAX_DIGITS};".as_bytes().to_vec();
+        let schema = load_secp256k1();
+        let mapper = Mapper::new(256, &schema.curve);
+
+        let points = mapper.pack(&body);
+
+        assert_eq!(points.len(), 2);
+
+        let unpacked = mapper.unpack(&points);
+
+        assert_eq!(unpacked, body);
+    }
+
+    #[bench]
+    fn bench_pack_1024(b: &mut Bencher) {
+        let body: Vec<u8> = (0..1024).map(|_| { rand::random::<u8>() }).collect();
+        let schema = load_secp256k1();
+        let mapper = Mapper::new(256, &schema.curve);
+        b.iter(|| mapper.pack(&body));
+    }
+
+    #[bench]
+    fn bench_unpack_1024(b: &mut Bencher) {
+        let body: Vec<u8> = (0..1024).map(|_| { rand::random::<u8>() }).collect();
+        let schema = load_secp256k1();
+        let mapper = Mapper::new(256, &schema.curve);
+        let points = mapper.pack(&body);
+        b.iter(|| mapper.unpack(&points));
     }
 }

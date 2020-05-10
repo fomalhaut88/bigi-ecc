@@ -8,6 +8,7 @@ use crate::{point, point_zero};
 use crate::base::{Point, CurveTrait};
 
 
+#[derive(Copy, Clone)]
 pub struct WeierstrassCurve {
     pub a: Bigi,
     pub b: Bigi,
@@ -67,7 +68,7 @@ impl CurveTrait for WeierstrassCurve {
         if p.is_zero {
             return *q;
         }
-        if (p.x == q.x) && ((p.y != q.y) || (p.y == bigi![0])) {
+        if (p.x == q.x) && ((p.y != q.y) || p.y.is_zero()) {
             return point_zero!();
         }
 
@@ -104,8 +105,8 @@ impl CurveTrait for WeierstrassCurve {
         // Ry := (Qx - Rx) * alpha - Qy
         let y = sub_mod(
             &mul_mod(
-                &sub_mod(&q.x, &x, &self.m
-                ), &alpha, &self.m
+                &sub_mod(&q.x, &x, &self.m),
+                &alpha, &self.m
             ), &q.y, &self.m
         );
 
@@ -118,6 +119,8 @@ impl CurveTrait for WeierstrassCurve {
 mod tests {
     use super::*;
     use crate::point_simple;
+    use crate::schemas::{load_secp256k1, load_fp254bnb};
+    use test::Bencher;
 
     #[test]
     fn test_check() {
@@ -176,5 +179,149 @@ mod tests {
         assert_eq!(curve.mul(&point_simple!(3, 6), &bigi![3]), point_simple!(80, 87));
         assert_eq!(curve.mul(&point_simple!(3, 6), &bigi![4]), point_simple!(3, 91));
         assert_eq!(curve.mul(&point_simple!(3, 6), &bigi![5]), point_zero!());
+    }
+
+    #[test]
+    fn test_secp256k1() {
+        let schema = load_secp256k1();
+        assert_eq!(schema.curve.check(&schema.generator), true);
+        assert_eq!(schema.curve.check(&schema.get_point(&bigi![25])), true);
+        assert_eq!(schema.get_point(&schema.order), schema.curve.zero());
+    }
+
+    #[test]
+    fn test_fp254bnb() {
+        let schema = load_fp254bnb();
+        assert_eq!(schema.curve.check(&schema.generator), true);
+        assert_eq!(schema.curve.check(&schema.get_point(&bigi![25])), true);
+        assert_eq!(schema.get_point(&schema.order), schema.curve.zero());
+    }
+
+    #[bench]
+    fn bench_secp256k1_generate_pair(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        b.iter(|| schema.generate_pair(&mut rng));
+    }
+
+    #[bench]
+    fn bench_secp256k1_add(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let k1 = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let k2 = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p1 = schema.get_point(&k1);
+        let p2 = schema.get_point(&k2);
+        b.iter(|| schema.curve.add(&p1, &p2));
+    }
+
+    #[bench]
+    fn bench_secp256k1_double(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.double(&p));
+    }
+
+    #[bench]
+    fn bench_secp256k1_mul(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let l = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.mul(&p, &l));
+    }
+
+    #[bench]
+    fn bench_secp256k1_check(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.check(&p));
+    }
+
+    #[bench]
+    fn bench_secp256k1_inv(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.inv(&p));
+    }
+
+    #[bench]
+    fn bench_secp256k1_find_y(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.find_y(&p.x));
+    }
+
+    #[bench]
+    fn bench_fp254bnb_generate_pair(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_fp254bnb();
+        b.iter(|| schema.generate_pair(&mut rng));
+    }
+
+    #[bench]
+    fn bench_fp254bnb_add(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_fp254bnb();
+        let k1 = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let k2 = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p1 = schema.get_point(&k1);
+        let p2 = schema.get_point(&k2);
+        b.iter(|| schema.curve.add(&p1, &p2));
+    }
+
+    #[bench]
+    fn bench_fp254bnb_double(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_fp254bnb();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.double(&p));
+    }
+
+    #[bench]
+    fn bench_fp254bnb_mul(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_fp254bnb();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let l = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.mul(&p, &l));
+    }
+
+    #[bench]
+    fn bench_fp254bnb_check(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_fp254bnb();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.check(&p));
+    }
+
+    #[bench]
+    fn bench_fp254bnb_inv(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_fp254bnb();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.inv(&p));
+    }
+
+    #[bench]
+    fn bench_fp254bnb_find_y(b: &mut Bencher) {
+        let mut rng = rand::thread_rng();
+        let schema = load_fp254bnb();
+        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let p = schema.get_point(&k);
+        b.iter(|| schema.curve.find_y(&p.x));
     }
 }

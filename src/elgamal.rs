@@ -38,7 +38,10 @@ pub fn decrypt<T: CurveTrait>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use test::Bencher;
     use crate::{point, schemas};
+    use crate::mapping::Mapper;
+    use crate::schemas::load_secp256k1;
 
     #[test]
     fn test_elgamal() {
@@ -57,5 +60,59 @@ mod tests {
         let decripted = decrypt(&schema, &private_key, &encrypted);
 
         assert_eq!(original[0], decripted[0]);
+    }
+
+    #[bench]
+    fn bench_encrypt_1024(b: &mut Bencher) {
+        let body: Vec<u8> = (0..1024).map(|_| { rand::random::<u8>() }).collect();
+
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let (_private_key, public_key) = schema.generate_pair(&mut rng);
+        let mapper = Mapper::new(256, &schema.curve);
+        let points = mapper.pack(&body);
+
+        b.iter(|| encrypt(&mut rng, &schema, &public_key, &points));
+    }
+
+    #[bench]
+    fn bench_encrypt_10240(b: &mut Bencher) {
+        let body: Vec<u8> = (0..10240).map(|_| { rand::random::<u8>() }).collect();
+
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let (_private_key, public_key) = schema.generate_pair(&mut rng);
+        let mapper = Mapper::new(256, &schema.curve);
+        let points = mapper.pack(&body);
+
+        b.iter(|| encrypt(&mut rng, &schema, &public_key, &points));
+    }
+
+    #[bench]
+    fn bench_decrypt_1024(b: &mut Bencher) {
+        let body: Vec<u8> = (0..1024).map(|_| { rand::random::<u8>() }).collect();
+
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let (private_key, public_key) = schema.generate_pair(&mut rng);
+        let mapper = Mapper::new(256, &schema.curve);
+        let points = mapper.pack(&body);
+        let encrypted = encrypt(&mut rng, &schema, &public_key, &points);
+
+        b.iter(|| decrypt(&schema, &private_key, &encrypted));
+    }
+
+    #[bench]
+    fn bench_decrypt_10240(b: &mut Bencher) {
+        let body: Vec<u8> = (0..10240).map(|_| { rand::random::<u8>() }).collect();
+
+        let mut rng = rand::thread_rng();
+        let schema = load_secp256k1();
+        let (private_key, public_key) = schema.generate_pair(&mut rng);
+        let mapper = Mapper::new(256, &schema.curve);
+        let points = mapper.pack(&body);
+        let encrypted = encrypt(&mut rng, &schema, &public_key, &points);
+
+        b.iter(|| decrypt(&schema, &private_key, &encrypted));
     }
 }
