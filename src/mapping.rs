@@ -1,4 +1,3 @@
-use std::cmp;
 use bigi::{Bigi, bigi, BIGI_MAX_DIGITS};
 use crate::{point};
 use crate::base::{Point, CurveTrait};
@@ -20,39 +19,48 @@ impl<T: CurveTrait + Copy> Mapper<T> {
 
     pub fn pack(&self, body: &Vec<u8>) -> Vec<Point> {
         let size = body.len();
-        let mut points: Vec<Point> = Vec::new();
 
-        for i in (0..size).step_by(self.block_size) {
-            let end = cmp::min(i + self.block_size, size);
+        let step = {
+            let mut step = size / self.block_size;
+            if size % self.block_size > 0 {
+                step += 1;
+            }
+            step
+        };
 
-            let block = &body[i..end];
-            let (x, y) = {
-                let res;
-                let mut x = Bigi::from_bytes(&block) << 8;
-                loop {
-                    match self.curve.find_y(&x) {
-                        Ok(roots) => { res = (x, roots.0); break; },
-                        Err(_e) => { x += &bigi![1] }
-                    }
+        (0..step).map(|idx| {
+            let block: Vec<u8> = body[idx..].iter().step_by(step).cloned().collect();
+
+            let mut x = Bigi::from_bytes(&block) << 8;
+            let y;
+
+            loop {
+                match self.curve.find_y(&x) {
+                    Ok(roots) => { y = roots.0; break; },
+                    Err(_e) => { x += &bigi![1] }
                 }
-                res
-            };
-            points.push(point!(x, y));
-        }
+            }
 
-        points
+            point!(x, y)
+        }).collect()
     }
 
     pub fn unpack(&self, points: &Vec<Point>) -> Vec<u8> {
-        let mut res: Vec<u8> = Vec::new();
-        for p in points.iter() {
+        let step = points.len();
+        let mut res: Vec<u8> = vec![0u8; step * self.block_size];
+
+        for (idx, p) in points.iter().enumerate() {
             let block = p.x.to_bytes()[1..(self.block_size + 1)].to_vec();
-            res.extend(&block);
+            for i in 0..self.block_size {
+                res[idx + i * step] = block[i];
+            }
         }
+
         if let Some(idx) = res.iter().rposition(|e| *e != 0) {
             let end = idx + 1;
             res.truncate(end);
         }
+
         res
     }
 }

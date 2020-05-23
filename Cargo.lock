@@ -2,15 +2,15 @@
 # It is not intended for manual editing.
 [[package]]
 name = "bigi"
-version = "0.3.3"
-source = "git+https://github.com/fomalhaut88/bigi.git?tag=v0.3.3#8c7a61cd581b86c6ddccf2a65b8621b17580734b"
+version = "0.4.0"
+source = "git+https://github.com/fomalhaut88/bigi.git?tag=v0.4.0#0596dc15c03f181ae0d9c616c21d38aa469075ac"
 dependencies = [
  "rand",
 ]
 
 [[package]]
 name = "bigi-ecc"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "bigi",
  "rand",
