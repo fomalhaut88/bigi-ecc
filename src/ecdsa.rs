@@ -49,6 +49,12 @@ pub fn check_signature<T: CurveTrait>(
         ) -> bool {
     let h = Bigi::from_bytes(hash) % &schema.order;
     let (r, s) = signature;
+
+    if r.is_zero() || (r >= &schema.order) ||
+            s.is_zero() || (s >= &schema.order) {
+        return false;
+    }
+
     let si = inv_mod(&s, &schema.order);
     let u1 = mul_mod(&si, &h, &schema.order);
     let u2 = mul_mod(&si, &r, &schema.order);
@@ -92,6 +98,12 @@ mod tests {
         assert_eq!(
             check_signature(&schema, &public_key, &hash.to_vec(),
                             &(bigi![1231], bigi![3246457])),
+            false
+        );
+
+        assert_eq!(
+            check_signature(&schema, &public_key, &hash.to_vec(),
+                            &(bigi![0], bigi![0])),
             false
         );
     }
