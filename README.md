@@ -1,6 +1,11 @@
 # bigi-ecc
 
-**bigi-ecc** is a Rust library for [elliptic-curve cryptography](https://en.wikipedia.org/wiki/Elliptic-curve_cryptography). It contains the most popular elliptic curves (Weierstrass curve, Montgomery curve, Edwards curve) and algorithms to encrypt and decrypt data, to build signatures and to map data blocks. Also there are several certain elliptic curves to import. The library is built for Rust Nightly strictly.
+**bigi-ecc** is a Rust library for
+[elliptic-curve cryptography](https://en.wikipedia.org/wiki/Elliptic-curve_cryptography).
+It contains the most popular elliptic curves (Weierstrass curve,
+Montgomery curve, Edwards curve) and algorithms to encrypt and decrypt data,
+to build signatures and to map data blocks. Also there are several certain
+elliptic curves to import. The library is built for Rust Nightly strictly.
 
 Available curve types:
 
@@ -12,7 +17,6 @@ Implemented algorithms:
 
 * [ElGamal encryption](https://en.wikipedia.org/wiki/ElGamal_encryption)
 * [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm)
-* Mapping
 
 Curves:
 
@@ -21,10 +25,19 @@ Curves:
 * [Curve25519](https://en.wikipedia.org/wiki/Curve25519)
 * Curve1174
 
-**bigi-ecc** refers to [bigi](https://github.com/fomalhaut88/bigi) as the library to work with multi precision arithmetic. As far as `bigi` uses static data allocation, it is necessary to specify the environment variable `BIGI_BITS` to build the project. For example:
+**bigi-ecc** refers to [bigi](https://github.com/fomalhaut88/bigi) as
+the library to work with multi precision arithmetic.
+
+Test:
 
 ```
-BIGI_BITS=512 cargo test
+cargo test
+```
+
+Benchmark:
+
+```
+cargo test
 ```
 
 
@@ -35,7 +48,7 @@ Add this line to the dependencies in your Cargo.toml:
 ```
 ...
 [dependencies]
-bigi = { git = "https://github.com/fomalhaut88/bigi-ecc.git", tag = "v0.4.0" }
+bigi = { git = "https://github.com/fomalhaut88/bigi-ecc.git", tag = "v1.0.0" }
 ```
 
 
@@ -44,98 +57,95 @@ bigi = { git = "https://github.com/fomalhaut88/bigi-ecc.git", tag = "v0.4.0" }
 #### Basic example
 
 ```rust
-use bigi::{bigi, Bigi, BIGI_MAX_DIGITS};
+use bigi::Bigi;
 use bigi_ecc::{point_simple, Point, CurveTrait, WeierstrassCurve};
-...
+
 let curve = WeierstrassCurve {
-    a: bigi![2],
-    b: bigi![3],
-    m: bigi![97]
+    a: Bigi::<1>::(2),
+    b: Bigi::<1>::(3),
+    m: Bigi::<1>::(97)
 };
-let p = point_simple!(3, 6);
-let q = point_simple!(80, 10);
+let p = point_simple!(1; 3, 6);
+let q = point_simple!(1; 80, 10);
 
 let on_curve = curve.check(&p);  // true
 let r = curve.add(&p, &q);  // {80, 87}
-let r = curve.mul(&p, &bigi![4]);  // {3, 91}
-let y = curve.find_y(&bigi![11]);  // Ok((17, 80))
+let r = curve.mul(&p, &Bigi::<1>::(4));  // {3, 91}
+let y = curve.find_y(&Bigi::<1>::(11));  // Ok((17, 80))
 ```
 
 #### Generating a pair
 
 ```rust
 use bigi_ecc::schemas::load_secp256k1;
-...
+
 let mut rng = rand::thread_rng();
 let schema = load_secp256k1();
 let (private_key, public_key) = schema.generate_pair(&mut rng);
-```
-
-#### Mapping
-
-```rust
-use bigi_ecc::schemas::load_secp256k1;
-use bigi_ecc::mapping::Mapper;
-...
-let schema = load_secp256k1();
-let mapper = Mapper::new(256, &schema.curve);
-
-let body = "Hi from bigi-ecc!".as_bytes().to_vec();
-let points = mapper.pack(&body);
-println!("{:?}", points);  // [{2908525508987885859495406407580349769533441, 8335874627041260108059297020257180928663710396154551669220515863129038431562}]
-let unpacked = mapper.unpack(&points);
-println!("{:?}", String::from_utf8(unpacked).unwrap());  // "Hi from bigi-ecc!"
 ```
 
 #### ElGamal encryption
 
 ```rust
-use bigi_ecc::schemas::load_secp256k1;
-use bigi_ecc::mapping::Mapper;
+use bigi_ecc::schemas;
 use bigi_ecc::elgamal::{encrypt, decrypt};
-...
-let mut rng = rand::thread_rng();
-let schema = load_secp256k1();
-let mapper = Mapper::new(256, &schema.curve);
 
-// Generating a pair
+// A test phrase
+let message = b"a test phrase";
+
+// Load schema
+let schema = schemas::load_secp256k1();
+
+// Generate a key pair
+let mut rng = rand::thread_rng();
 let (private_key, public_key) = schema.generate_pair(&mut rng);
 
-// Encrypting
-let body = "Hi from bigi-ecc!".as_bytes().to_vec();
-let points = mapper.pack(&body);
-let encrypted = encrypt(&mut rng, &schema, &public_key, &points);
+// Encrypt the message, the result is a pair of points on the curve.
+let encrypted = encrypt(&mut rng, &schema, &public_key, &message[..]);
 
-// Decrypting
-let points = decrypt(&schema, &private_key, &encrypted);
-let decri
+// Decrypt the message
+let mut decripted = decrypt(&schema, &private_key, &encrypted);
+
+// Remove trailing zeros
+if let Some(idx) = decripted.iter().rposition(|&c| c != 0) {
+    decripted.truncate(idx + 1);
+}
+
+assert_eq!(decripted, message);
 ```
 
 #### ECDSA
 
 ```rust
 use sha2::{Sha256, Digest};
-use bigi_ecc::schemas::load_secp256k1;
+use bigi_ecc::schemas;
 use bigi_ecc::ecdsa::{build_signature, check_signature};
-...
-let mut rng = rand::thread_rng();
-let mut hasher = Sha256::new();
-let schema = load_secp256k1();
 
-// Generating a pair
+let msg = b"a test phrase";
+
+// Get SHA256 hash of the message
+let mut hasher = Sha256::new();
+hasher.reset();
+hasher.update(&msg[..]);
+let hash = hasher.finalize();
+
+// Load a crupto schema
+let schema = schemas::load_secp256k1();
+
+// Generate a key pair
+let mut rng = rand::thread_rng();
 let (private_key, public_key) = schema.generate_pair(&mut rng);
 
-// Building hash
-let body = "Hi from bigi-ecc!".as_bytes().to_vec();
-hasher.reset();
-hasher.input(&body[..]);
-let hash = hasher.result().to_vec();
+// Build signature
+let signature = build_signature(
+    &mut rng, &schema, &private_key, &hash.to_vec()
+);
 
-// Building signature
-let signature = build_signature(&mut rng, &schema, &private_key, &hash);
-
-// Checking signature
-let is_valid = check_signature(&schema, &public_key, &hash, &signature);  // true
+// Chech the signature
+assert_eq!(
+    check_signature(&schema, &public_key, &hash.to_vec(), &signature),
+    true
+);
 ```
 
 

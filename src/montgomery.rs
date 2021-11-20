@@ -1,37 +1,36 @@
-/*
-Formula:
-    B y^2 = x^3 + A x^2 + x
-*/
-use bigi::{Bigi, bigi, BIGI_MAX_DIGITS};
+//! This module implements [Montgomery curve](https://en.wikipedia.org/wiki/Montgomery_curve)
+//! that is defined by the equation `y^2 = x^3 + A x^2 + x`.
+use bigi::Bigi;
 use bigi::prime::{add_mod, sub_mod, mul_mod, div_mod, sqrt_mod};
 use crate::{point, point_zero};
 use crate::base::{Point, CurveTrait};
 
 
+/// Montgomery curve type.
 #[derive(Copy, Clone)]
-pub struct MontgomeryCurve {
-    pub a: Bigi,
-    pub b: Bigi,
-    pub m: Bigi
+pub struct MontgomeryCurve<const N: usize> {
+    pub a: Bigi<N>,
+    pub b: Bigi<N>,
+    pub m: Bigi<N>
 }
 
 
-impl MontgomeryCurve {
-    fn left(&self, y: &Bigi) -> Bigi {
+impl<const N: usize> MontgomeryCurve<N> {
+    fn left(&self, y: &Bigi<N>) -> Bigi<N> {
         mul_mod(
             &mul_mod(&y, &y, &self.m),
             &self.b, &self.m
         )
     }
 
-    fn right(&self, x: &Bigi) -> Bigi {
+    fn right(&self, x: &Bigi<N>) -> Bigi<N> {
         mul_mod(
             &add_mod(
                 &mul_mod(
                     &add_mod(&x, &self.a, &self.m),
                     &x, &self.m
                 ),
-                &bigi![1], &self.m
+                &Bigi::<N>::from(1), &self.m
             ),
             &x, &self.m
         )
@@ -39,16 +38,16 @@ impl MontgomeryCurve {
 }
 
 
-impl CurveTrait for MontgomeryCurve {
-    fn get_modulo(&self) -> Bigi {
+impl<const N: usize> CurveTrait<N> for MontgomeryCurve<N> {
+    fn get_modulo(&self) -> Bigi<N> {
         self.m
     }
 
-    fn zero(&self) -> Point {
-        point_zero!()
+    fn zero(&self) -> Point<N> {
+        point_zero!(N)
     }
 
-    fn check(&self, p: &Point) -> bool {
+    fn check(&self, p: &Point<N>) -> bool {
         if p.is_zero {
             true
         } else {
@@ -56,26 +55,26 @@ impl CurveTrait for MontgomeryCurve {
         }
     }
 
-    fn find_y(&self, x: &Bigi) -> Result<(Bigi, Bigi), &'static str> {
+    fn find_y(&self, x: &Bigi<N>) -> Result<(Bigi<N>, Bigi<N>), &'static str> {
         let right = self.right(&x);
         let y2 = div_mod(&right, &self.b, &self.m);
         let roots = sqrt_mod(&y2, &self.m)?;
         Ok(roots)
     }
 
-    fn inv(&self, p: &Point) -> Point {
+    fn inv(&self, p: &Point<N>) -> Point<N> {
         point!(p.x, self.m - &p.y)
     }
 
-    fn add(&self, p: &Point, q: &Point) -> Point {
+    fn add(&self, p: &Point<N>, q: &Point<N>) -> Point<N> {
         if q.is_zero {
             return *p;
         }
         if p.is_zero {
             return *q;
         }
-        if (p.x == q.x) && ((p.y != q.y) || (p.y == bigi![0])) {
-            return point_zero!();
+        if (p.x == q.x) && ((p.y != q.y) || (p.y == Bigi::<N>::from(0))) {
+            return point_zero!(N);
         }
 
         let alpha = {
@@ -85,15 +84,15 @@ impl CurveTrait for MontgomeryCurve {
                     &add_mod(
                         &mul_mod(
                             &add_mod(
-                                &mul_mod(&p.x, &bigi![3], &self.m),
-                                &mul_mod(&self.a, &bigi![2], &self.m),
+                                &mul_mod(&p.x, &Bigi::<N>::from(3), &self.m),
+                                &mul_mod(&self.a, &Bigi::<N>::from(2), &self.m),
                                 &self.m
                             ),
                             &p.x, &self.m
-                        ), &bigi![1], &self.m
+                        ), &Bigi::<N>::from(1), &self.m
                     ),
                     &mul_mod(
-                        &mul_mod(&p.y, &bigi![2], &self.m),
+                        &mul_mod(&p.y, &Bigi::<N>::from(2), &self.m),
                         &self.b, &self.m
                     ),
                     &self.m
@@ -137,6 +136,7 @@ impl CurveTrait for MontgomeryCurve {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bigi::bigi;
     use crate::point_simple;
     use crate::schemas::load_curve25519;
     use test::Bencher;
@@ -144,128 +144,168 @@ mod tests {
     #[test]
     fn test_check() {
         let curve = MontgomeryCurve {
-            a: bigi![5],
-            b: bigi![2],
-            m: bigi![97]
+            a: bigi![8; 5],
+            b: bigi![8; 2],
+            m: bigi![8; 97]
         };
-        assert_eq!(curve.check(&point_simple!(65, 15)), true);
-        assert_eq!(curve.check(&point_simple!(0, 0)), true);
-        assert_eq!(curve.check(&point_zero!()), true);
-        assert_eq!(curve.check(&point_simple!(65, 81)), false);
+        assert_eq!(curve.check(&point_simple!(8; 65, 15)), true);
+        assert_eq!(curve.check(&point_simple!(8; 0, 0)), true);
+        assert_eq!(curve.check(&point_zero!(8)), true);
+        assert_eq!(curve.check(&point_simple!(8; 65, 81)), false);
     }
 
     #[test]
     fn test_add() {
         let curve = MontgomeryCurve {
-            a: bigi![5],
-            b: bigi![2],
-            m: bigi![97]
+            a: bigi![8; 5],
+            b: bigi![8; 2],
+            m: bigi![8; 97]
         };
 
-        assert_eq!(curve.add(&point_simple!(12, 39), &point_simple!(65, 15)), point_simple!(18, 90));
-        assert_eq!(curve.add(&point_simple!(12, 39), &point_zero!()), point_simple!(12, 39));
-        assert_eq!(curve.add(&point_zero!(), &point_simple!(12, 39)), point_simple!(12, 39));
-        assert_eq!(curve.add(&point_zero!(), &point_zero!()), point_zero!());
-        assert_eq!(curve.add(&point_simple!(12, 39), &point_simple!(12, 58)), point_zero!());
+        assert_eq!(
+            curve.add(&point_simple!(8; 12, 39), &point_simple!(8; 65, 15)),
+            point_simple!(8; 18, 90)
+        );
+        assert_eq!(
+            curve.add(&point_simple!(8; 12, 39), &point_zero!(8)),
+            point_simple!(8; 12, 39)
+        );
+        assert_eq!(
+            curve.add(&point_zero!(8), &point_simple!(8; 12, 39)),
+            point_simple!(8; 12, 39)
+        );
+        assert_eq!(
+            curve.add(&point_zero!(8), &point_zero!(8)),
+            point_zero!(8)
+        );
+        assert_eq!(
+            curve.add(&point_simple!(8; 12, 39), &point_simple!(8; 12, 58)),
+            point_zero!(8)
+        );
     }
 
     #[test]
     fn test_double() {
         let curve = MontgomeryCurve {
-            a: bigi![5],
-            b: bigi![2],
-            m: bigi![97]
+            a: bigi![8; 5],
+            b: bigi![8; 2],
+            m: bigi![8; 97]
         };
 
-        assert_eq!(curve.double(&point_simple!(12, 39)), point_simple!(65, 15));
-        assert_eq!(curve.double(&point_zero!()), point_zero!());
-        assert_eq!(curve.double(&point_simple!(0, 0)), point_zero!());
+        assert_eq!(
+            curve.double(&point_simple!(8; 12, 39)), point_simple!(8; 65, 15)
+        );
+        assert_eq!(curve.double(&point_zero!(8)), point_zero!(8));
+        assert_eq!(curve.double(&point_simple!(8; 0, 0)), point_zero!(8));
     }
 
     #[test]
     fn test_mul() {
         let curve = MontgomeryCurve {
-            a: bigi![5],
-            b: bigi![2],
-            m: bigi![97]
+            a: bigi![8; 5],
+            b: bigi![8; 2],
+            m: bigi![8; 97]
         };
 
-        assert_eq!(curve.mul(&point_simple!(12, 39), &bigi![0]), point_zero!());
-        assert_eq!(curve.mul(&point_simple!(12, 39), &bigi![1]), point_simple!(12, 39));
-        assert_eq!(curve.mul(&point_simple!(12, 39), &bigi![2]), point_simple!(65, 15));
-        assert_eq!(curve.mul(&point_simple!(12, 39), &bigi![3]), point_simple!(18, 90));
-        assert_eq!(curve.mul(&point_simple!(12, 39), &bigi![11]), point_zero!());
+        assert_eq!(
+            curve.mul(&point_simple!(8; 12, 39), &bigi![8; 0]),
+            point_zero!(8)
+        );
+        assert_eq!(
+            curve.mul(&point_simple!(8; 12, 39), &bigi![8; 1]),
+            point_simple!(8; 12, 39)
+        );
+        assert_eq!(
+            curve.mul(&point_simple!(8; 12, 39), &bigi![8; 2]),
+            point_simple!(8; 65, 15)
+        );
+        assert_eq!(
+            curve.mul(&point_simple!(8; 12, 39), &bigi![8; 3]),
+            point_simple!(8; 18, 90)
+        );
+        assert_eq!(
+            curve.mul(&point_simple!(8; 12, 39), &bigi![8; 11]),
+            point_zero!(8)
+        );
     }
 
     #[test]
     fn test_curve25519() {
         let schema = load_curve25519();
         assert_eq!(schema.curve.check(&schema.generator), true);
-        assert_eq!(schema.curve.check(&schema.get_point(&bigi![25])), true);
+        assert_eq!(schema.curve.check(&schema.get_point(&bigi![8; 25])), true);
         assert_eq!(schema.get_point(&schema.order), schema.curve.zero());
     }
 
     #[bench]
-    fn bench_curve25519_generate_pair(b: &mut Bencher) {
+    fn bench_curve25519_generate_pair(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve25519();
-        b.iter(|| schema.generate_pair(&mut rng));
+        bencher.iter(|| schema.generate_pair(&mut rng));
     }
 
     #[bench]
-    fn bench_curve25519_add(b: &mut Bencher) {
+    fn bench_curve25519_add(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve25519();
-        let k1 = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
-        let k2 = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let k1 = Bigi::<8>::gen_random(
+            &mut rng, schema.bits, false) % &schema.order;
+        let k2 = Bigi::<8>::gen_random(
+            &mut rng, schema.bits, false) % &schema.order;
         let p1 = schema.get_point(&k1);
         let p2 = schema.get_point(&k2);
-        b.iter(|| schema.curve.add(&p1, &p2));
+        bencher.iter(|| schema.curve.add(&p1, &p2));
     }
 
     #[bench]
-    fn bench_curve25519_double(b: &mut Bencher) {
+    fn bench_curve25519_double(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve25519();
-        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let k = Bigi::<8>::gen_random(
+            &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
-        b.iter(|| schema.curve.double(&p));
+        bencher.iter(|| schema.curve.double(&p));
     }
 
     #[bench]
-    fn bench_curve25519_mul(b: &mut Bencher) {
+    fn bench_curve25519_mul(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve25519();
-        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
-        let l = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let k = Bigi::<8>::gen_random(
+            &mut rng, schema.bits, false) % &schema.order;
+        let l = Bigi::<8>::gen_random(
+            &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
-        b.iter(|| schema.curve.mul(&p, &l));
+        bencher.iter(|| schema.curve.mul(&p, &l));
     }
 
     #[bench]
-    fn bench_curve25519_check(b: &mut Bencher) {
+    fn bench_curve25519_check(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve25519();
-        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let k = Bigi::<8>::gen_random(
+            &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
-        b.iter(|| schema.curve.check(&p));
+        bencher.iter(|| schema.curve.check(&p));
     }
 
     #[bench]
-    fn bench_curve25519_inv(b: &mut Bencher) {
+    fn bench_curve25519_inv(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve25519();
-        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let k = Bigi::<8>::gen_random(
+            &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
-        b.iter(|| schema.curve.inv(&p));
+        bencher.iter(|| schema.curve.inv(&p));
     }
 
     #[bench]
-    fn bench_curve25519_find_y(b: &mut Bencher) {
+    fn bench_curve25519_find_y(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve25519();
-        let k = Bigi::gen_random(&mut rng, schema.bits, false) % &schema.order;
+        let k = Bigi::<8>::gen_random(
+            &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
-        b.iter(|| schema.curve.find_y(&p.x));
+        bencher.iter(|| schema.curve.find_y(&p.x));
     }
 }

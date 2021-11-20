@@ -1,19 +1,63 @@
+//! This module implements [ECDSA](https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm)
+//! algorithms.
+//!
+//! Usage example:
+//! ```rust
+//! use sha2::{Sha256, Digest};
+//! use bigi_ecc::schemas;
+//! use bigi_ecc::ecdsa::{build_signature, check_signature};
+//!
+//! let msg = b"a test phrase";
+//!
+//! // Get SHA256 hash of the message
+//! let mut hasher = Sha256::new();
+//! hasher.reset();
+//! hasher.update(&msg[..]);
+//! let hash = hasher.finalize();
+//!
+//! // Load a crypto schema
+//! let schema = schemas::load_secp256k1();
+//!
+//! // Generate a key pair
+//! let mut rng = rand::thread_rng();
+//! let (private_key, public_key) = schema.generate_pair(&mut rng);
+//!
+//! // Build signature
+//! let signature = build_signature(
+//!     &mut rng, &schema, &private_key, &hash.to_vec()
+//! );
+//!
+//! // Chech the signature
+//! assert_eq!(
+//!     check_signature(&schema, &public_key, &hash.to_vec(), &signature),
+//!     true
+//! );
+//! ```
 extern crate rand;
 
 use rand::Rng;
-use bigi::{Bigi, bigi, BIGI_MAX_DIGITS};
+use bigi::Bigi;
 use bigi::prime::{add_mod, mul_mod, div_mod, inv_mod};
 use crate::base::{CurveTrait, Point};
-use crate::schemas::{Schema};
+use crate::schemas::Schema;
 
 
-pub fn build_signature<T: CurveTrait, R: Rng + ?Sized>(
+/// Builds a signature for given schema, private key and hash of a message.
+pub fn build_signature<R: Rng + ?Sized, T: CurveTrait<N>, const N: usize> (
             rng: &mut R,
-            schema: &Schema<T>,
-            private_key: &Bigi,
+            schema: &Schema<T, N>,
+            private_key: &Bigi<N>,
             hash: &Vec<u8>
-        ) -> (Bigi, Bigi) {
-    let h = Bigi::from_bytes(hash) % &schema.order;
+        ) -> (Bigi<N>, Bigi<N>) {
+    // let mut hash_bytes = hash.clone();
+    // hash_bytes.resize(N << 3, 0);
+
+    assert!(hash.len() == N << 2);
+
+    let mut hash_aligned = vec![0u8; N << 3];
+    hash_aligned[..hash.len()].copy_from_slice(hash);
+
+    let h = Bigi::<N>::from_bytes(&hash_aligned) % &schema.order;
 
     let (k, r) = {
         let mut k;
@@ -22,7 +66,7 @@ pub fn build_signature<T: CurveTrait, R: Rng + ?Sized>(
             let pair = schema.generate_pair(rng);
             k = pair.0;
             r = pair.1.x % &schema.order;
-            if r != bigi![0] {
+            if r != Bigi::<N>::from(0) {
                 break;
             }
         }
@@ -41,13 +85,20 @@ pub fn build_signature<T: CurveTrait, R: Rng + ?Sized>(
 }
 
 
-pub fn check_signature<T: CurveTrait>(
-            schema: &Schema<T>,
-            public_key: &Point,
+/// Checks for the signature for the given schema, public key and the hash
+/// of a message.
+pub fn check_signature<T: CurveTrait<N>, const N: usize> (
+            schema: &Schema<T, N>,
+            public_key: &Point<N>,
             hash: &Vec<u8>,
-            signature: &(Bigi, Bigi)
+            signature: &(Bigi<N>, Bigi<N>)
         ) -> bool {
-    let h = Bigi::from_bytes(hash) % &schema.order;
+    assert!(hash.len() == N << 2);
+
+    let mut hash_aligned = vec![0u8; N << 3];
+    hash_aligned[..hash.len()].copy_from_slice(hash);
+
+    let h = Bigi::<N>::from_bytes(&hash_aligned) % &schema.order;
     let (r, s) = signature;
 
     if r.is_zero() || (r >= &schema.order) ||
@@ -69,18 +120,19 @@ pub fn check_signature<T: CurveTrait>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use bigi::bigi;
     use test::Bencher;
     use sha2::{Sha256, Digest};
     use crate::schemas;
 
     #[test]
     fn test_ecdsa() {
-        let message = b"This project is sort of half polyfill for features like the host bindings proposal and half features for empowering high-level interactions between JS and wasm-compiled code (currently mostly from Rust). More specifically this project allows JS/wasm to communicate with strings, JS objects, classes, etc, as opposed to purely integers and floats. Using wasm-bindgen for example you can define a JS class in Rust or take a string from JS or return one. The functionality is growing as well!";
+        let message = b"a test phrase";
 
         let mut hasher = Sha256::new();
         hasher.reset();
-        hasher.input(&message[..]);
-        let hash = hasher.result();
+        hasher.update(&message[..]);
+        let hash = hasher.finalize();
 
         let mut rng = rand::thread_rng();
         let schema = schemas::load_secp256k1();
@@ -97,25 +149,25 @@ mod tests {
 
         assert_eq!(
             check_signature(&schema, &public_key, &hash.to_vec(),
-                            &(bigi![1231], bigi![3246457])),
+                            &(bigi![8; 1231], bigi![8; 3246457])),
             false
         );
 
         assert_eq!(
             check_signature(&schema, &public_key, &hash.to_vec(),
-                            &(bigi![0], bigi![0])),
+                            &(bigi![8; 0], bigi![8; 0])),
             false
         );
     }
 
     #[bench]
     fn bench_build_signature(b: &mut Bencher) {
-        let message = b"This project is sort of half polyfill for features like the host bindings proposal and half features for empowering high-level interactions between JS and wasm-compiled code (currently mostly from Rust). More specifically this project allows JS/wasm to communicate with strings, JS objects, classes, etc, as opposed to purely integers and floats. Using wasm-bindgen for example you can define a JS class in Rust or take a string from JS or return one. The functionality is growing as well!";
+        let message = b"a test phrase";
 
         let mut hasher = Sha256::new();
         hasher.reset();
-        hasher.input(&message[..]);
-        let hash = hasher.result();
+        hasher.update(&message[..]);
+        let hash = hasher.finalize();
 
         let mut rng = rand::thread_rng();
         let schema = schemas::load_secp256k1();
@@ -128,12 +180,12 @@ mod tests {
 
     #[bench]
     fn bench_check_signature(b: &mut Bencher) {
-        let message = b"This project is sort of half polyfill for features like the host bindings proposal and half features for empowering high-level interactions between JS and wasm-compiled code (currently mostly from Rust). More specifically this project allows JS/wasm to communicate with strings, JS objects, classes, etc, as opposed to purely integers and floats. Using wasm-bindgen for example you can define a JS class in Rust or take a string from JS or return one. The functionality is growing as well!";
+        let message = b"a test phrase";
 
         let mut hasher = Sha256::new();
         hasher.reset();
-        hasher.input(&message[..]);
-        let hash = hasher.result();
+        hasher.update(&message[..]);
+        let hash = hasher.finalize();
 
         let mut rng = rand::thread_rng();
         let schema = schemas::load_secp256k1();

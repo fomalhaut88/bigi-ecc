@@ -1,12 +1,12 @@
 [package]
 name = "bigi-ecc"
-version = "0.4.1"
-authors = ["Alexander <mail@fomalhaut.su>"]
-edition = "2018"
+version = "1.0.0"
+authors = ["alexander <mail@fomalhaut.su>"]
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-rand = "0.7.3"
-sha2 = "0.8.1"
-bigi = { git = "https://github.com/fomalhaut88/bigi.git", tag = "v0.4.0" }
+rand = "0.8.4"
+sha2 = "0.9.8"
+bigi = { git = "https://github.com/fomalhaut88/bigi.git", tag = "v1.0.0" }
