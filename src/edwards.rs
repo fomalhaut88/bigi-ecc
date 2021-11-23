@@ -110,60 +110,60 @@ mod tests {
     #[test]
     fn test_check() {
         let curve = EdwardsCurve {
-            d: bigi![8; 2],
-            m: bigi![8; 97]
+            d: bigi![4; 2],
+            m: bigi![4; 97]
         };
-        assert_eq!(curve.check(&point_simple!(8; 48, 27)), true);
-        assert_eq!(curve.check(&point_simple!(8; 0, 0)), false);
+        assert_eq!(curve.check(&point_simple!(4; 48, 27)), true);
+        assert_eq!(curve.check(&point_simple!(4; 0, 0)), false);
         assert_eq!(curve.check(&curve.zero()), true);
-        assert_eq!(curve.check(&point_simple!(8; 48, 28)), false);
+        assert_eq!(curve.check(&point_simple!(4; 48, 28)), false);
     }
 
     #[test]
     fn test_add() {
         let curve = EdwardsCurve {
-            d: bigi![8; 2],
-            m: bigi![8; 97]
+            d: bigi![4; 2],
+            m: bigi![4; 97]
         };
 
-        assert_eq!(curve.add(&point_simple!(8; 5, 40), &point_simple!(8; 48, 27)), point_simple!(8; 27, 48));
-        assert_eq!(curve.add(&point_simple!(8; 5, 40), &curve.zero()), point_simple!(8; 5, 40));
-        assert_eq!(curve.add(&curve.zero(), &point_simple!(8; 5, 40)), point_simple!(8; 5, 40));
+        assert_eq!(curve.add(&point_simple!(4; 5, 40), &point_simple!(4; 48, 27)), point_simple!(4; 27, 48));
+        assert_eq!(curve.add(&point_simple!(4; 5, 40), &curve.zero()), point_simple!(4; 5, 40));
+        assert_eq!(curve.add(&curve.zero(), &point_simple!(4; 5, 40)), point_simple!(4; 5, 40));
         assert_eq!(curve.add(&curve.zero(), &curve.zero()), curve.zero());
-        assert_eq!(curve.add(&point_simple!(8; 5, 40), &point_simple!(8; 92, 40)), curve.zero());
+        assert_eq!(curve.add(&point_simple!(4; 5, 40), &point_simple!(4; 92, 40)), curve.zero());
     }
 
     #[test]
     fn test_double() {
         let curve = EdwardsCurve {
-            d: bigi![8; 2],
-            m: bigi![8; 97]
+            d: bigi![4; 2],
+            m: bigi![4; 97]
         };
 
-        assert_eq!(curve.double(&point_simple!(8; 5, 40)), point_simple!(8; 48, 27));
+        assert_eq!(curve.double(&point_simple!(4; 5, 40)), point_simple!(4; 48, 27));
         assert_eq!(curve.double(&curve.zero()), curve.zero());
-        assert_eq!(curve.double(&point_simple!(8; 0, 96)), curve.zero());
+        assert_eq!(curve.double(&point_simple!(4; 0, 96)), curve.zero());
     }
 
     #[test]
     fn test_mul() {
         let curve = EdwardsCurve {
-            d: bigi![8; 2],
-            m: bigi![8; 97]
+            d: bigi![4; 2],
+            m: bigi![4; 97]
         };
 
-        assert_eq!(curve.mul(&point_simple!(8; 5, 40), &bigi![8; 0]), curve.zero());
-        assert_eq!(curve.mul(&point_simple!(8; 5, 40), &bigi![8; 1]), point_simple!(8; 5, 40));
-        assert_eq!(curve.mul(&point_simple!(8; 5, 40), &bigi![8; 2]), point_simple!(8; 48, 27));
-        assert_eq!(curve.mul(&point_simple!(8; 5, 40), &bigi![8; 3]), point_simple!(8; 27, 48));
-        assert_eq!(curve.mul(&point_simple!(8; 5, 40), &bigi![8; 20]), curve.zero());
+        assert_eq!(curve.mul(&point_simple!(4; 5, 40), &bigi![4; 0]), curve.zero());
+        assert_eq!(curve.mul(&point_simple!(4; 5, 40), &bigi![4; 1]), point_simple!(4; 5, 40));
+        assert_eq!(curve.mul(&point_simple!(4; 5, 40), &bigi![4; 2]), point_simple!(4; 48, 27));
+        assert_eq!(curve.mul(&point_simple!(4; 5, 40), &bigi![4; 3]), point_simple!(4; 27, 48));
+        assert_eq!(curve.mul(&point_simple!(4; 5, 40), &bigi![4; 20]), curve.zero());
     }
 
     #[test]
     fn test_curve1174() {
         let schema = load_curve1174();
         assert_eq!(schema.curve.check(&schema.generator), true);
-        assert_eq!(schema.curve.check(&schema.get_point(&bigi![8; 25])), true);
+        assert_eq!(schema.curve.check(&schema.get_point(&bigi![4; 25])), true);
         assert_eq!(schema.get_point(&schema.order), schema.curve.zero());
     }
 
@@ -178,9 +178,9 @@ mod tests {
     fn bench_curve1174_add(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve1174();
-        let k1 = Bigi::<8>::gen_random(
+        let k1 = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
-        let k2 = Bigi::<8>::gen_random(
+        let k2 = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p1 = schema.get_point(&k1);
         let p2 = schema.get_point(&k2);
@@ -191,7 +191,7 @@ mod tests {
     fn bench_curve1174_double(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve1174();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.double(&p));
@@ -201,9 +201,9 @@ mod tests {
     fn bench_curve1174_mul(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve1174();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
-        let l = Bigi::<8>::gen_random(
+        let l = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.mul(&p, &l));
@@ -213,7 +213,7 @@ mod tests {
     fn bench_curve1174_check(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve1174();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.check(&p));
@@ -223,7 +223,7 @@ mod tests {
     fn bench_curve1174_inv(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve1174();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.inv(&p));
@@ -233,7 +233,7 @@ mod tests {
     fn bench_curve1174_find_y(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_curve1174();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.find_y(&p.x));

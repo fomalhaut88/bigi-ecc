@@ -38,78 +38,78 @@ impl<T, const N: usize> Schema<T, N> where T: CurveTrait<N> {
 
 
 /// Returns SECP256K1 schema.
-pub fn load_secp256k1() -> Schema<WeierstrassCurve<8>, 8> {
+pub fn load_secp256k1() -> Schema<WeierstrassCurve<4>, 4> {
     Schema {
         bits: 256,
         title: "secp256k1",
-        curve: WeierstrassCurve::<8> {
-            a: Bigi::<8>::from_hex("0x0"),
-            b: Bigi::<8>::from_hex("0x7"),
-            m: Bigi::<8>::from_hex("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F")
+        curve: WeierstrassCurve::<4> {
+            a: Bigi::<4>::from_hex("0x0"),
+            b: Bigi::<4>::from_hex("0x7"),
+            m: Bigi::<4>::from_hex("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F")
         },
-        order: Bigi::<8>::from_hex("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"),
-        cofactor: Bigi::<8>::from_hex("0x1"),
+        order: Bigi::<4>::from_hex("0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141"),
+        cofactor: Bigi::<4>::from_hex("0x1"),
         generator: point!(
-            Bigi::<8>::from_hex("0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"),
-            Bigi::<8>::from_hex("0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8")
+            Bigi::<4>::from_hex("0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798"),
+            Bigi::<4>::from_hex("0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8")
         )
     }
 }
 
 
 /// Returns FP254BNB schema.
-pub fn load_fp254bnb() -> Schema<WeierstrassCurve<8>, 8> {
+pub fn load_fp254bnb() -> Schema<WeierstrassCurve<4>, 4> {
     Schema {
         bits: 254,
         title: "fp254bnb",
-        curve: WeierstrassCurve::<8> {
-            a: Bigi::<8>::from_hex("0x0"),
-            b:Bigi::<8>::from_hex("0x2"),
-            m: Bigi::<8>::from_hex("0x2523648240000001BA344D80000000086121000000000013A700000000000013")
+        curve: WeierstrassCurve::<4> {
+            a: Bigi::<4>::from_hex("0x0"),
+            b:Bigi::<4>::from_hex("0x2"),
+            m: Bigi::<4>::from_hex("0x2523648240000001BA344D80000000086121000000000013A700000000000013")
         },
-        order: Bigi::<8>::from_hex("0x2523648240000001BA344D8000000007FF9F800000000010A10000000000000D"),
-        cofactor: Bigi::<8>::from_hex("0x1"),
+        order: Bigi::<4>::from_hex("0x2523648240000001BA344D8000000007FF9F800000000010A10000000000000D"),
+        cofactor: Bigi::<4>::from_hex("0x1"),
         generator: point!(
-            Bigi::<8>::from_hex("0x2523648240000001BA344D80000000086121000000000013A700000000000012"),
-            Bigi::<8>::from_hex("0x1")
+            Bigi::<4>::from_hex("0x2523648240000001BA344D80000000086121000000000013A700000000000012"),
+            Bigi::<4>::from_hex("0x1")
         )
     }
 }
 
 
 /// Returns Curve25519 schema.
-pub fn load_curve25519() -> Schema<MontgomeryCurve<8>, 8> {
+pub fn load_curve25519() -> Schema<MontgomeryCurve<4>, 4> {
     Schema {
         bits: 255,
         title: "curve25519",
-        curve: MontgomeryCurve::<8> {
-            a: Bigi::<8>::from_hex("0x76D06"),
-            b: Bigi::<8>::from_hex("0x1"),
-            m: Bigi::<8>::from_hex("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED")
+        curve: MontgomeryCurve::<4> {
+            a: Bigi::<4>::from_hex("0x76D06"),
+            b: Bigi::<4>::from_hex("0x1"),
+            m: Bigi::<4>::from_hex("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFED")
         },
-        order: Bigi::<8>::from_hex("0x1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED"),
-        cofactor: Bigi::<8>::from_hex("0x8"),
+        order: Bigi::<4>::from_hex("0x1000000000000000000000000000000014DEF9DEA2F79CD65812631A5CF5D3ED"),
+        cofactor: Bigi::<4>::from_hex("0x8"),
         generator: point!(
-            Bigi::<8>::from_hex("0x9"),
-            Bigi::<8>::from_hex("0x20AE19A1B8A086B4E01EDD2C7748D14C923D4D7E6D7C61B229E9C5A27ECED3D9")
+            Bigi::<4>::from_hex("0x9"),
+            Bigi::<4>::from_hex("0x20AE19A1B8A086B4E01EDD2C7748D14C923D4D7E6D7C61B229E9C5A27ECED3D9")
         )
     }
 }
 
 
-pub fn load_curve1174() -> Schema<EdwardsCurve<8>, 8> {
+pub fn load_curve1174() -> Schema<EdwardsCurve<4>, 4> {
     Schema {
         bits: 251,
         title: "curve1174",
-        curve: EdwardsCurve::<8> {
-            d: Bigi::<8>::from_hex("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB61"),
-            m: Bigi::<8>::from_hex("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7")
+        curve: EdwardsCurve::<4> {
+            d: Bigi::<4>::from_hex("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFB61"),
+            m: Bigi::<4>::from_hex("0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7")
         },
-        order: Bigi::<8>::from_hex("0x1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF77965C4DFD307348944D45FD166C971"),
-        cofactor: Bigi::<8>::from(4),
+        order: Bigi::<4>::from_hex("0x1FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF77965C4DFD307348944D45FD166C971"),
+        cofactor: Bigi::<4>::from_hex("0x4"),
         generator: point!(
-            Bigi::<8>::from_hex("0x37FBB0CEA308C479343AEE7C029A190C021D96A492ECD6516123F27BCE29EDA"),
-            Bigi::<8>::from_hex("0x6B72F82D47FB7CC6656841169840E0C4FE2DEE2AF3F976BA4CCB1BF9B46360E")
+            Bigi::<4>::from_hex("0x37FBB0CEA308C479343AEE7C029A190C021D96A492ECD6516123F27BCE29EDA"),
+            Bigi::<4>::from_hex("0x6B72F82D47FB7CC6656841169840E0C4FE2DEE2AF3F976BA4CCB1BF9B46360E")
         )
     }
 }

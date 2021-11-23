@@ -4,15 +4,15 @@ version = 3
 
 [[package]]
 name = "bigi"
-version = "1.0.0"
-source = "git+https://github.com/fomalhaut88/bigi.git?tag=v1.0.0#ede6537b29afa5bb78db442e9ff20a1210e73517"
+version = "1.1.0"
+source = "git+https://github.com/fomalhaut88/bigi.git?tag=v1.1.0#48a1178927252975da9dad4ceb661585fc1dbd16"
 dependencies = [
  "rand",
 ]
 
 [[package]]
 name = "bigi-ecc"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "bigi",
  "rand",

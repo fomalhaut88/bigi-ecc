@@ -19,7 +19,7 @@ pub struct Point<const N: usize> {
 /// use bigi::Bigi;
 /// use bigi_ecc::{Point, point};
 ///
-/// let p = point!(Bigi::<8>::from(5), Bigi::<8>::from(3));
+/// let p = point!(Bigi::<4>::from(5), Bigi::<4>::from(3));
 /// ```
 #[macro_export]
 macro_rules! point {
@@ -34,7 +34,7 @@ macro_rules! point {
 /// use bigi::Bigi;
 /// use bigi_ecc::{Point, point_zero};
 ///
-/// let p = point_zero!(8);
+/// let p = point_zero!(4);
 /// ```
 #[macro_export]
 macro_rules! point_zero {
@@ -172,26 +172,22 @@ mod tests {
 
     #[test]
     fn test_to_hex() {
-        assert_eq!(point_simple!(8; 1234, 1255).to_hex(), "0x4D2 0x4E7");
+        assert_eq!(point_simple!(4; 1234, 1255).to_hex(), "0x4D2 0x4E7");
     }
 
     #[test]
     fn test_from_hex() {
-        assert_eq!(Point::<8>::from_hex("0x4D2 0x4E7"),
-                   point_simple!(8; 1234, 1255));
+        assert_eq!(Point::<4>::from_hex("0x4D2 0x4E7"),
+                   point_simple!(4; 1234, 1255));
     }
 
     #[test]
     fn test_to_bytes() {
         assert_eq!(
-            point_simple!(8; 2, 3).to_bytes(),
+            point_simple!(4; 2, 3).to_bytes(),
             vec![2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                  3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         );
     }
@@ -199,53 +195,47 @@ mod tests {
     #[test]
     fn test_from_bytes() {
         assert_eq!(
-            Point::<8>::from_bytes(
+            Point::<4>::from_bytes(
                 &vec![2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                       3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                      0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            ), point_simple!(8; 2, 3)
+            ), point_simple!(4; 2, 3)
         );
     }
 
     #[bench]
-    fn bench_to_hex_256(b: &mut Bencher) {
+    fn bench_to_hex_256(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
-        let x = Bigi::<8>::gen_random(&mut rng, 256, false);
-        let y = Bigi::<8>::gen_random(&mut rng, 256, false);
+        let x = Bigi::<4>::gen_random(&mut rng, 256, false);
+        let y = Bigi::<4>::gen_random(&mut rng, 256, false);
         let p = point!(x, y);
-        b.iter(|| p.to_hex());
+        bencher.iter(|| p.to_hex());
     }
 
     #[bench]
-    fn bench_to_bytes_256(b: &mut Bencher) {
+    fn bench_to_bytes_256(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
-        let x = Bigi::<8>::gen_random(&mut rng, 256, false);
-        let y = Bigi::<8>::gen_random(&mut rng, 256, false);
+        let x = Bigi::<4>::gen_random(&mut rng, 256, false);
+        let y = Bigi::<4>::gen_random(&mut rng, 256, false);
         let p = point!(x, y);
-        b.iter(|| p.to_bytes());
+        bencher.iter(|| p.to_bytes());
     }
 
     #[bench]
-    fn bench_from_hex_256(b: &mut Bencher) {
-        b.iter(|| Point::<8>::from_hex("0xCA0D6AB29A21576F099A19B90DE2AFAF0A350DA6CA630725130E3F6A2BE77EB2 0xAE8B83698251862BE2C4D808149099D9D6525EF141B10C90BFF745094D1C9861"));
+    fn bench_from_hex_256(bencher: &mut Bencher) {
+        bencher.iter(|| Point::<4>::from_hex("0xCA0D6AB29A21576F099A19B90DE2AFAF0A350DA6CA630725130E3F6A2BE77EB2 0xAE8B83698251862BE2C4D808149099D9D6525EF141B10C90BFF745094D1C9861"));
     }
 
     #[bench]
-    fn bench_from_bytes_256(b: &mut Bencher) {
-        b.iter(|| Point::<8>::from_bytes(
+    fn bench_from_bytes_256(bencher: &mut Bencher) {
+        bencher.iter(|| Point::<4>::from_bytes(
             &vec![158, 17, 67, 29, 164, 141, 187, 19, 131, 247, 203, 136, 74,
                   245, 44, 55, 52, 199, 147, 42, 68, 57, 169, 223, 210, 162,
-                  60, 196, 45, 7, 59, 77, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                  60, 196, 45, 7, 59, 77,
                   164, 76, 176, 189, 26, 65, 21, 46, 51, 209, 243, 12, 68, 246,
                   75, 198, 43, 40, 139, 106, 66, 13, 3, 66, 37, 197, 108, 27,
-                  52, 222, 83, 23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                  52, 222, 83, 23]
         ));
     }
 }

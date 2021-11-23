@@ -125,85 +125,85 @@ mod tests {
     #[test]
     fn test_check() {
         let curve = WeierstrassCurve {
-            a: bigi![8; 2],
-            b: bigi![8; 3],
-            m: bigi![8; 97]
+            a: bigi![4; 2],
+            b: bigi![4; 3],
+            m: bigi![4; 97]
         };
-        assert_eq!(curve.check(&point_simple!(8; 80, 87)), true);
-        assert_eq!(curve.check(&point_simple!(8; 0, 0)), false);
-        assert_eq!(curve.check(&point_zero!(8)), true);
-        assert_eq!(curve.check(&point_simple!(8; 80, 86)), false);
-        assert_eq!(curve.check(&point_simple!(8; 30, 0)), true);
+        assert_eq!(curve.check(&point_simple!(4; 80, 87)), true);
+        assert_eq!(curve.check(&point_simple!(4; 0, 0)), false);
+        assert_eq!(curve.check(&point_zero!(4)), true);
+        assert_eq!(curve.check(&point_simple!(4; 80, 86)), false);
+        assert_eq!(curve.check(&point_simple!(4; 30, 0)), true);
     }
 
     #[test]
     fn test_add() {
         let curve = WeierstrassCurve {
-            a: bigi![8; 2],
-            b: bigi![8; 3],
-            m: bigi![8; 97]
+            a: bigi![4; 2],
+            b: bigi![4; 3],
+            m: bigi![4; 97]
         };
 
         assert_eq!(
-            curve.add(&point_simple!(8; 3, 6), &point_simple!(8; 80, 10)),
-            point_simple!(8; 80, 87)
+            curve.add(&point_simple!(4; 3, 6), &point_simple!(4; 80, 10)),
+            point_simple!(4; 80, 87)
         );
         assert_eq!(
-            curve.add(&point_simple!(8; 3, 6), &point_zero!(8)),
-            point_simple!(8; 3, 6)
+            curve.add(&point_simple!(4; 3, 6), &point_zero!(4)),
+            point_simple!(4; 3, 6)
         );
         assert_eq!(
-            curve.add(&point_zero!(8), &point_simple!(8; 3, 6)),
-            point_simple!(8; 3, 6)
+            curve.add(&point_zero!(4), &point_simple!(4; 3, 6)),
+            point_simple!(4; 3, 6)
         );
         assert_eq!(
-            curve.add(&point_zero!(8), &point_zero!(8)),
-            point_zero!(8)
+            curve.add(&point_zero!(4), &point_zero!(4)),
+            point_zero!(4)
         );
         assert_eq!(
-            curve.add(&point_simple!(8; 3, 6), &point_simple!(8; 3, 91)),
-            point_zero!(8)
+            curve.add(&point_simple!(4; 3, 6), &point_simple!(4; 3, 91)),
+            point_zero!(4)
         );
         assert_eq!(
-            curve.add(&point_simple!(8; 30, 0), &point_simple!(8; 68, 0)),
-            point_simple!(8; 96, 0)
+            curve.add(&point_simple!(4; 30, 0), &point_simple!(4; 68, 0)),
+            point_simple!(4; 96, 0)
         );
     }
 
     #[test]
     fn test_double() {
         let curve = WeierstrassCurve {
-            a: bigi![8; 2],
-            b: bigi![8; 3],
-            m: bigi![8; 97]
+            a: bigi![4; 2],
+            b: bigi![4; 3],
+            m: bigi![4; 97]
         };
 
         assert_eq!(curve.double(
-            &point_simple!(8; 3, 6)), point_simple!(8; 80, 10));
-        assert_eq!(curve.double(&point_zero!(8)), point_zero!(8));
-        assert_eq!(curve.double(&point_simple!(8; 30, 0)), point_zero!(8));
+            &point_simple!(4; 3, 6)), point_simple!(4; 80, 10));
+        assert_eq!(curve.double(&point_zero!(4)), point_zero!(4));
+        assert_eq!(curve.double(&point_simple!(4; 30, 0)), point_zero!(4));
     }
 
     #[test]
     fn test_mul() {
         let curve = WeierstrassCurve {
-            a: bigi![8; 2],
-            b: bigi![8; 3],
-            m: bigi![8; 97]
+            a: bigi![4; 2],
+            b: bigi![4; 3],
+            m: bigi![4; 97]
         };
 
         assert_eq!(curve.mul(
-            &point_simple!(8; 3, 6), &bigi![8; 0]), point_zero!(8));
+            &point_simple!(4; 3, 6), &bigi![4; 0]), point_zero!(4));
         assert_eq!(curve.mul(
-            &point_simple!(8; 3, 6), &bigi![8; 1]), point_simple!(8; 3, 6));
+            &point_simple!(4; 3, 6), &bigi![4; 1]), point_simple!(4; 3, 6));
         assert_eq!(curve.mul(
-            &point_simple!(8; 3, 6), &bigi![8; 2]), point_simple!(8; 80, 10));
+            &point_simple!(4; 3, 6), &bigi![4; 2]), point_simple!(4; 80, 10));
         assert_eq!(curve.mul(
-            &point_simple!(8; 3, 6), &bigi![8; 3]), point_simple!(8; 80, 87));
+            &point_simple!(4; 3, 6), &bigi![4; 3]), point_simple!(4; 80, 87));
         assert_eq!(curve.mul(
-            &point_simple!(8; 3, 6), &bigi![8; 4]), point_simple!(8; 3, 91));
+            &point_simple!(4; 3, 6), &bigi![4; 4]), point_simple!(4; 3, 91));
         assert_eq!(curve.mul(
-            &point_simple!(8; 3, 6), &bigi![8; 5]), point_zero!(8));
+            &point_simple!(4; 3, 6), &bigi![4; 5]), point_zero!(4));
     }
 
     #[test]
@@ -211,7 +211,7 @@ mod tests {
         let schema = load_secp256k1();
         assert_eq!(schema.curve.check(&schema.generator), true);
         assert_eq!(schema.curve.check(
-            &schema.get_point(&Bigi::<8>::from(25))), true);
+            &schema.get_point(&Bigi::<4>::from(25))), true);
         assert_eq!(schema.get_point(&schema.order), schema.curve.zero());
     }
 
@@ -220,7 +220,7 @@ mod tests {
         let schema = load_fp254bnb();
         assert_eq!(schema.curve.check(&schema.generator), true);
         assert_eq!(schema.curve.check(
-            &schema.get_point(&Bigi::<8>::from(25))), true);
+            &schema.get_point(&Bigi::<4>::from(25))), true);
         assert_eq!(schema.get_point(&schema.order), schema.curve.zero());
     }
 
@@ -235,9 +235,9 @@ mod tests {
     fn bench_secp256k1_add(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_secp256k1();
-        let k1 = Bigi::<8>::gen_random(
+        let k1 = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
-        let k2 = Bigi::<8>::gen_random(
+        let k2 = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p1 = schema.get_point(&k1);
         let p2 = schema.get_point(&k2);
@@ -248,7 +248,7 @@ mod tests {
     fn bench_secp256k1_double(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_secp256k1();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.double(&p));
@@ -258,9 +258,9 @@ mod tests {
     fn bench_secp256k1_mul(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_secp256k1();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
-        let l = Bigi::<8>::gen_random(
+        let l = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.mul(&p, &l));
@@ -270,7 +270,7 @@ mod tests {
     fn bench_secp256k1_check(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_secp256k1();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.check(&p));
@@ -280,7 +280,7 @@ mod tests {
     fn bench_secp256k1_inv(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_secp256k1();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.inv(&p));
@@ -290,7 +290,7 @@ mod tests {
     fn bench_secp256k1_find_y(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_secp256k1();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.find_y(&p.x));
@@ -307,9 +307,9 @@ mod tests {
     fn bench_fp254bnb_add(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_fp254bnb();
-        let k1 = Bigi::<8>::gen_random(
+        let k1 = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
-        let k2 = Bigi::<8>::gen_random(
+        let k2 = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p1 = schema.get_point(&k1);
         let p2 = schema.get_point(&k2);
@@ -320,7 +320,7 @@ mod tests {
     fn bench_fp254bnb_double(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_fp254bnb();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.double(&p));
@@ -330,9 +330,9 @@ mod tests {
     fn bench_fp254bnb_mul(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_fp254bnb();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
-        let l = Bigi::<8>::gen_random(
+        let l = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.mul(&p, &l));
@@ -342,7 +342,7 @@ mod tests {
     fn bench_fp254bnb_check(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_fp254bnb();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.check(&p));
@@ -352,7 +352,7 @@ mod tests {
     fn bench_fp254bnb_inv(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_fp254bnb();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.inv(&p));
@@ -362,7 +362,7 @@ mod tests {
     fn bench_fp254bnb_find_y(bencher: &mut Bencher) {
         let mut rng = rand::thread_rng();
         let schema = load_fp254bnb();
-        let k = Bigi::<8>::gen_random(
+        let k = Bigi::<4>::gen_random(
             &mut rng, schema.bits, false) % &schema.order;
         let p = schema.get_point(&k);
         bencher.iter(|| schema.curve.find_y(&p.x));

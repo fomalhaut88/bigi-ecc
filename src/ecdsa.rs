@@ -49,10 +49,7 @@ pub fn build_signature<R: Rng + ?Sized, T: CurveTrait<N>, const N: usize> (
             private_key: &Bigi<N>,
             hash: &Vec<u8>
         ) -> (Bigi<N>, Bigi<N>) {
-    // let mut hash_bytes = hash.clone();
-    // hash_bytes.resize(N << 3, 0);
-
-    assert!(hash.len() == N << 2);
+    assert!(hash.len() == N << 3);
 
     let mut hash_aligned = vec![0u8; N << 3];
     hash_aligned[..hash.len()].copy_from_slice(hash);
@@ -93,7 +90,7 @@ pub fn check_signature<T: CurveTrait<N>, const N: usize> (
             hash: &Vec<u8>,
             signature: &(Bigi<N>, Bigi<N>)
         ) -> bool {
-    assert!(hash.len() == N << 2);
+    assert!(hash.len() == N << 3);
 
     let mut hash_aligned = vec![0u8; N << 3];
     hash_aligned[..hash.len()].copy_from_slice(hash);
@@ -113,7 +110,7 @@ pub fn check_signature<T: CurveTrait<N>, const N: usize> (
         &schema.get_point(&u1),
         &schema.curve.mul(&public_key, &u2)
     );
-    p.x == *r
+    p.x % &schema.order == *r
 }
 
 
@@ -149,13 +146,13 @@ mod tests {
 
         assert_eq!(
             check_signature(&schema, &public_key, &hash.to_vec(),
-                            &(bigi![8; 1231], bigi![8; 3246457])),
+                            &(bigi![4; 1231], bigi![4; 3246457])),
             false
         );
 
         assert_eq!(
             check_signature(&schema, &public_key, &hash.to_vec(),
-                            &(bigi![8; 0], bigi![8; 0])),
+                            &(bigi![4; 0], bigi![4; 0])),
             false
         );
     }

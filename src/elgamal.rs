@@ -71,7 +71,7 @@ pub fn decrypt<T: CurveTrait<N>, const N: usize> (
 
 fn bytes_to_point<T: CurveTrait<N>, const N: usize>(
             bytes: &[u8], curve: &T) -> Point<N> {
-    assert!(bytes.len() <= (N << 2) - 2);
+    assert!(bytes.len() <= (N << 3) - 2);
 
     let mut bytes_aligned = vec![0u8; N << 3];
     bytes_aligned[..bytes.len()].copy_from_slice(bytes);
@@ -92,7 +92,7 @@ fn bytes_to_point<T: CurveTrait<N>, const N: usize>(
 
 
 fn bytes_from_point<const N: usize>(p: &Point<N>) -> Vec<u8> {
-    (p.x >> 8).to_bytes()[..(N << 2) - 2].to_vec()
+    (p.x >> 8).to_bytes()[..(N << 3) - 2].to_vec()
 }
 
 
